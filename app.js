@@ -1,9 +1,30 @@
 const express = require('express');
-const app=express();
-const Post=require('./api/models/post');
 
+const app=express();
+
+const Post=require('./api/models/post');
 const postData=new Post();
 
+
+
+
+const multer  = require('multer');
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, './uploads/')
+    },
+    filename: function (req, file, cb) {
+      cb(null, `${file.fieldname}-${Date.now()}.jpg`);
+    }
+});
+const upload = multer({storage:storage});
+
+
+
+
+
+
+//to make node known we r using json
 app.use(express.json());
 
 app.use((req,res,next)=>{
@@ -27,9 +48,19 @@ app.get('/api/posts/:postId',(req,res)=>{
     }
 });
 
-app.post('/api/posts',(req,res)=>{
+app.post('/api/posts',upload.single("post-image"),(req,res)=>{
     console.log(req.body);
-    res.send('Ok');
+    const newPost = {
+        "id": `${Date.now()}`,
+        "title": req.body.title,
+        "content": req.body.content,
+        "post_image": req.file.path,
+        "added_date": `${Date.now()}`
+    };
+    console.log(req.file.path);
+    postData.addNewPost(newPost);
+    // console.log(req.body);
+    res.status(201).send(newPost);
 })
 
 
